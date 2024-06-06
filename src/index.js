@@ -19,6 +19,20 @@ client.on('messageCreate', (msg) => {
         return
     if (msg.content == "pingping")
         msg.reply('ping');
+});
+
+client.on('interactionCreate', (interaction) => {
+    if (!interaction.isChatInputCommand()) return;
+
+    if (interaction.commandName == 'yep')
+        interaction.reply("yupyup");
+
+    if (interaction.commandName == 'add') {
+        const num1 = interaction.options.get('num-1').value;
+        const num2 = interaction.options.get('num-2').value;
+
+        interaction.reply(`Those numbers add to: ${num1 + num2}`);
+    }
 })
 
 client.login(process.env.TOKEN);
