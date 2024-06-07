@@ -1,5 +1,7 @@
 require('dotenv').config();
 const {Client, IntentsBitField} = require('discord.js');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const client = new Client({
     intents: [
@@ -27,11 +29,20 @@ client.on('interactionCreate', (interaction) => {
     if (interaction.commandName == 'yep')
         interaction.reply("yupyup");
 
-    if (interaction.commandName == 'add') {
-        const num1 = interaction.options.get('num-1').value;
-        const num2 = interaction.options.get('num-2').value;
+    if (interaction.commandName == 'get-name') {
+        axios.get(`https://www.backloggd.com/u/${interaction.options.get('username').value}`)
+        .then(response => {
+            const html = response.data;
+            const $ = cheerio.load(html);
 
-        interaction.reply(`Those numbers add to: ${num1 + num2}`);
+            // Example: Extracting all links from the webpage
+            const username = $('h3.main-header').text().trim();
+
+            interaction.reply(`Found user: ${username}`);
+        })
+        .catch(error => {
+            interaction.reply('Error fetching the username:', error);
+        });
     }
 })
 
