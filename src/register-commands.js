@@ -36,8 +36,8 @@ const commands = [
     //     ]
     // },
     {
-        name: 'get-name',
-        description: 'gets the username from a profile page',
+        name: 'get-info',
+        description: 'gets the username and favourite game of a specified user',
         options: [
             {
                 name: 'username',

@@ -29,20 +29,23 @@ client.on('interactionCreate', (interaction) => {
     if (interaction.commandName == 'yep')
         interaction.reply("yupyup");
 
-    if (interaction.commandName == 'get-name') {
-        axios.get(`https://www.backloggd.com/u/${interaction.options.get('username').value}`)
-        .then(response => {
+    if (interaction.commandName == 'get-info') {
+        axios.get(`https://www.backloggd.com/u/${interaction.options.get('username').value}`).then(response => {
             const html = response.data;
             const $ = cheerio.load(html);
 
-            // Example: Extracting all links from the webpage
             const username = $('h3.main-header').text().trim();
+            var fav_game;
 
-            interaction.reply(`Found user: ${username}`);
-        })
-        .catch(error => {
-            interaction.reply('Error fetching the username:', error);
-        });
+            axios.get(`https://www.backloggd.com${$('#profile-favorites').find($('.ultimate_fav')).find($('a.cover-link')).attr('href')}`).then(response => {
+                const html = response.data;
+                const $ = cheerio.load(html);
+
+                fav_game = $('#title').find($('h1.mb-0:first')).text().trim();
+
+                interaction.reply(`Found user: ${username} \nTheir favourite game is: ${fav_game}`);
+            }).catch(error => { interaction.reply('Error fetching the user\'s favorite game:', error); });
+        }).catch(error => { interaction.reply('Error fetching the username:', error); });
     }
 })
 
