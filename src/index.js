@@ -47,25 +47,59 @@ client.on('interactionCreate', async (interaction) => {
 
             const usernameText = $('h3.main-header').text().trim();
             const favGameUrl = `https://www.backloggd.com${$('#profile-favorites').find('.ultimate_fav a.cover-link').attr('href')}`;
+
+            let recentlyPlayed =[]
+
+            $(`#profile-journal`).find('.game-cover').each((index, element) => {
+                recentlyPlayed.push($(element).attr('game_id'));
+            });
+
+            const accessToken = await getIGDBToken();
+            let recentlyPlayedNames = [];
+            for (let gameId of recentlyPlayed) {
+                const gameName = await getGameNameById(gameId, accessToken);
+                recentlyPlayedNames.push(gameName);
+            }
             
             let favGameResponse;
             try {
                 favGameResponse = await axios.get(favGameUrl);
             } catch (error) {
                 //console.error('Error fetching the user\'s favorite game:', error);
-                return interaction.editReply(`Found user: ${usernameText}`);
+                return interaction.editReply(`Found user: ${usernameText} \nTheir most recently played game is: ${recentlyPlayedNames[0]}`);
             }
             const favGameHtml = favGameResponse.data;
             const $$ = cheerio.load(favGameHtml);
 
             const favGame = $$('#title h1.mb-0:first').text().trim();
 
-            await interaction.editReply(`Found user: ${usernameText}\nTheir favourite game is: ${favGame}`);
+            await interaction.editReply(`Found user: ${usernameText}\nTheir favourite game is: ${favGame}\nTheir most recently played game is: ${recentlyPlayedNames[0]}`);
         } catch (error) {
             console.error(error);
             await interaction.editReply('Error fetching the user info.');
         }
     }
 })
+
+async function getIGDBToken() {
+    const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
+        params: {
+            client_id: process.env.IGDB_ID,
+            client_secret: process.env.IGDB_SECRET,
+            grant_type: 'client_credentials'
+        }
+    });
+    return response.data.access_token;
+}
+
+async function getGameNameById(gameId, accessToken) {
+    const response = await axios.post('https://api.igdb.com/v4/games', `fields name; where id = ${gameId};`, {
+        headers: {
+            'Client-ID': process.env.IGDB_ID,
+            'Authorization': `Bearer ${accessToken}`
+        }
+    });
+    return response.data[0].name;
+}
 
 client.login(process.env.TOKEN);
