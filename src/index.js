@@ -23,29 +23,36 @@ client.on('messageCreate', (msg) => {
         msg.reply('ping');
 });
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     if (interaction.commandName == 'yep')
         interaction.reply("yupyup");
 
     if (interaction.commandName == 'get-info') {
-        axios.get(`https://www.backloggd.com/u/${interaction.options.get('username').value}`).then(response => {
+        await interaction.deferReply();  // Acknowledge the interaction
+
+        try {
+            const username = interaction.options.get('username').value;
+            const userUrl = `https://www.backloggd.com/u/${username}`;
+            const response = await axios.get(userUrl);
             const html = response.data;
             const $ = cheerio.load(html);
 
-            const username = $('h3.main-header').text().trim();
-            var fav_game;
+            const usernameText = $('h3.main-header').text().trim();
+            const favGameUrl = `https://www.backloggd.com${$('#profile-favorites').find('.ultimate_fav a.cover-link').attr('href')}`;
+            
+            const favGameResponse = await axios.get(favGameUrl);
+            const favGameHtml = favGameResponse.data;
+            const $$ = cheerio.load(favGameHtml);
 
-            axios.get(`https://www.backloggd.com${$('#profile-favorites').find($('.ultimate_fav')).find($('a.cover-link')).attr('href')}`).then(response => {
-                const html = response.data;
-                const $ = cheerio.load(html);
+            const favGame = $$('#title h1.mb-0:first').text().trim();
 
-                fav_game = $('#title').find($('h1.mb-0:first')).text().trim();
-
-                interaction.reply(`Found user: ${username} \nTheir favourite game is: ${fav_game}`);
-            }).catch(error => { interaction.reply('Error fetching the user\'s favorite game:', error); });
-        }).catch(error => { interaction.reply('Error fetching the username:', error); });
+            await interaction.editReply(`Found user: ${usernameText}\nTheir favourite game is: ${favGame}`);
+        } catch (error) {
+            console.error(error);
+            await interaction.editReply('Error fetching the user info.');
+        }
     }
 })
 
