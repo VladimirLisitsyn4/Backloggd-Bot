@@ -46,7 +46,6 @@ client.on('interactionCreate', async (interaction) => {
             const $ = cheerio.load(html);
 
             const usernameText = $('h3.main-header').text().trim();
-            const favGameUrl = `https://www.backloggd.com${$('#profile-favorites').find('.ultimate_fav a.cover-link').attr('href')}`;
 
             let recentlyPlayed =[]
 
@@ -54,24 +53,17 @@ client.on('interactionCreate', async (interaction) => {
                 recentlyPlayed.push($(element).attr('game_id'));
             });
 
+            const favGameId = $(`.ultimate_fav`).find('.game-cover').attr('game_id')
+
             const accessToken = await getIGDBToken();
+
+            const favGame = await getGameNameById(favGameId, accessToken);
+            
             let recentlyPlayedNames = [];
             for (let gameId of recentlyPlayed) {
                 const gameName = await getGameNameById(gameId, accessToken);
                 recentlyPlayedNames.push(gameName);
             }
-            
-            let favGameResponse;
-            try {
-                favGameResponse = await axios.get(favGameUrl);
-            } catch (error) {
-                //console.error('Error fetching the user\'s favorite game:', error);
-                return interaction.editReply(`Found user: ${usernameText} \nTheir most recently played game is: ${recentlyPlayedNames[0]}`);
-            }
-            const favGameHtml = favGameResponse.data;
-            const $$ = cheerio.load(favGameHtml);
-
-            const favGame = $$('#title h1.mb-0:first').text().trim();
 
             await interaction.editReply(`Found user: ${usernameText}\nTheir favourite game is: ${favGame}\nTheir most recently played game is: ${recentlyPlayedNames[0]}`);
         } catch (error) {
