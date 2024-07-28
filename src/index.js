@@ -29,6 +29,37 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.commandName == 'yep')
         interaction.reply("yupyup");
 
+    if (interaction.commandName == 'popular-games') {
+        await interaction.deferReply();
+
+        let response;
+        try {
+            response = await axios.get('https://www.backloggd.com/');
+        } catch (error) {
+            return interaction.editReply('Can not establish connection to Backloggd.');
+        }
+        const html = response.data;
+        const $ = cheerio.load(html);
+
+        const popularGameIds = [];
+        $('#trending-games').find('.game-cover').each((index, element) => {
+            
+            popularGameIds.push($(element).attr('game_id'));
+        });
+
+        const accessToken = await getIGDBToken();
+
+        let popularGames = [];
+        for (let gameId of popularGameIds) {
+            const gameName = await getGameNameById(gameId, accessToken);
+            popularGames.push(gameName);
+        }
+
+        await interaction.editReply(`The most popular games on Backloggd right now are: \n${popularGames[0]},\n${popularGames[1]},\n${popularGames[2]},\n${popularGames[3]},\n${popularGames[4]},\n${popularGames[5]}`);
+        
+
+    }
+
     if (interaction.commandName == 'get-info') {
         await interaction.deferReply();
 

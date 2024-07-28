@@ -46,6 +46,10 @@ const commands = [
                 required: 'true'
             }
         ]
+    },
+    {
+        name: 'popular-games',
+        description: 'gets the most popular games on Backlogged right now'
     }
 ];
 
